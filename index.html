@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VIVAAN AI Video Studio</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#edf2ff;font-family:system-ui,Arial;padding:16px}
+header{font-weight:900;font-size:22px;color:#7de4ff}.sub{color:#b7c4df;font-size:14px}
+main{max-width:900px;margin:20px auto;display:grid;grid-template-columns:1fr 1fr;gap:15px}.card{background:#151f35;border:1px solid #344260;border-radius:16px;padding:16px}
+h1{font-size:27px}h2{font-size:19px;margin-top:0}label{display:block;color:#b9c6df;margin:12px 0 6px}
+textarea,select{width:100%;background:#0b1324;color:white;border:1px solid #405071;border-radius:9px;padding:11px;font:inherit}textarea{height:130px}
+.btn{width:100%;padding:12px;margin-top:12px;border:0;border-radius:10px;background:linear-gradient(90deg,#805cff,#2c9cff);color:white;font-weight:bold;font-size:15px}.btn:disabled{opacity:.5}
+.preview{aspect-ratio:16/9;border:1px dashed #65769b;border-radius:12px;display:grid;place-items:center;text-align:center;background:radial-gradient(circle,#334b7a,#10182b);padding:12px;overflow:hidden}
+.preview video{width:100%;height:100%;object-fit:contain}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.note{color:#b7c4df;font-size:12px;line-height:1.55}.status{margin-top:10px;color:#a8d8ff;font-size:14px;overflow-wrap:anywhere}
+@media(max-width:650px){main{grid-template-columns:1fr}}
+</style></head><body>
+<header>VIVAAN <span>AI VIDEO STUDIO</span></header><h1>Prompt से AI वीडियो बनाएं 🎬</h1>
+<p class="sub">Text-to-video • Fictional AI character prompts • Real video generation via secure server API</p>
+<main><section class="card"><h2>✨ Video Generator</h2>
+<label for="prompt">अपना Prompt लिखें</label><textarea id="prompt" maxlength="5000" placeholder="उदाहरण: एक photorealistic काल्पनिक भारतीय interior designer सुंदर POP false ceiling वाले living room में कैमरे की ओर समझा रहा है, cinematic lighting, smooth camera movement..."></textarea>
+<label>AI Character</label><select id="character"><option>Fictional realistic AI presenter</option><option>Fictional male interior designer</option><option>Fictional female presenter</option><option>Custom character described in prompt</option></select>
+<div class="row"><div><label>Aspect ratio</label><select id="ratio"><option value="9:16">9:16 Reels</option><option value="16:9">16:9 YouTube</option><option value="1:1">1:1 Square</option><option value="4:3">4:3</option><option value="3:4">3:4 Portrait</option></select></div>
+<div><label>Resolution</label><select id="resolution"><option value="720p">720p</option><option value="1080p">1080p (higher cost)</option></select></div></div>
+<label>Duration (WAN 2.7: 2–15 seconds)</label><select id="duration"><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="10">10 seconds</option><option value="15">15 seconds</option></select>
+<button class="btn" id="generate">✨ Generate Real AI Video</button>
+<p class="note">API key केवल server पर सुरक्षित रखी जाती है। वीडियो बनाने में समय और provider credits लग सकते हैं; यह unlimited/free guarantee नहीं है।</p><div class="status" id="status">Ready. Prompt डालें।</div>
+</section><section class="card"><h2>🎞️ Video Preview</h2><div class="preview" id="preview">Generated video यहाँ दिखेगा</div>
+<p class="note" id="detail">जब generation पूरा होगा, video player और download link दिखाई देंगे।</p>
+<button class="btn" id="clear" style="background:#263452">Clear preview</button>
+</section></main>
+<script>
+const $=id=>document.getElementById(id);
+$("generate").addEventListener("click",async()=>{
+ const prompt=$("prompt").value.trim();if(!prompt){$("status").textContent="पहले prompt लिखें।";return;}
+ const btn=$("generate");btn.disabled=true;btn.textContent="Generating… कृपया प्रतीक्षा करें";
+ $("status").textContent="AI model को request भेजी जा रही है। Video बनने में कुछ मिनट लग सकते हैं।";
+ $("preview").textContent="Generating video…";$("detail").textContent="";
+ try{
+  const res=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,character:$("character").value,aspect_ratio:$("ratio").value,resolution:$("resolution").value,duration:Number($("duration").value)})});
+  const data=await res.json();if(!res.ok)throw new Error(data.error||"Generation failed");
+  if(!data.videoUrl)throw new Error("API response में video URL नहीं मिला");
+  const video=document.createElement("video");video.controls=true;video.playsInline=true;video.src=data.videoUrl;
+  $("preview").replaceChildren(video);
+  const a=document.createElement("a");a.href=data.videoUrl;a.target="_blank";a.rel="noopener";a.textContent="Open / download video";a.style.color="#7de4ff";
+  $("detail").replaceChildren(a);$("status").textContent="Video तैयार है!"; 
+ }catch(e){$("preview").textContent="Video generate नहीं हुआ";$("status").textContent="Error: "+e.message+" — server/API key और billing जाँचें।";}
+ finally{btn.disabled=false;btn.textContent="✨ Generate Real AI Video";}
+});
+$("clear").onclick=()=>{$("preview").textContent="Generated video यहाँ दिखेगा";$("detail").textContent="";$("status").textContent="Ready."};
+</script></body></html>
